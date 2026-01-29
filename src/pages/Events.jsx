@@ -12,6 +12,7 @@ const Events = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    const [submitting, setSubmitting] = useState(false);
     const categories = ['All', 'Technical', 'Workshop', 'Cultural', 'Gaming', 'Creative'];
 
     useEffect(() => {
@@ -37,66 +38,28 @@ const Events = () => {
         }
     }, [category, events]);
 
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.onload = () => resolve(true);
-            script.onerror = () => resolve(false);
-            document.body.appendChild(script);
-        });
-    };
-
     const handleRegister = async (event) => {
         if (!user) {
             navigate('/login');
             return;
         }
 
-        const res = await loadRazorpay();
-        if (!res) {
-            alert('Razorpay SDK failed to load.');
-            return;
-        }
+        if (!window.confirm(`Register for ${event.title}?`)) return;
 
+        setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            const orderRes = await axios.post(`${API_BASE_URL}/api/payments/create-order`,
+            const res = await axios.post(`${API_BASE_URL}/api/registrations/register`,
                 { eventId: event._id },
                 { headers: { 'x-auth-token': token } }
             );
 
-            const { amount, id: order_id, currency } = orderRes.data;
-
-            const options = {
-                key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'your_test_key',
-                amount: amount.toString(),
-                currency: currency,
-                name: "Techfest Portal",
-                description: `Payment for ${event.title}`,
-                order_id: order_id,
-                handler: async (response) => {
-                    try {
-                        const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`,
-                            response,
-                            { headers: { 'x-auth-token': token } }
-                        );
-                        if (verifyRes.data.success) {
-                            alert('Payment successful!');
-                            navigate('/profile');
-                        }
-                    } catch (err) {
-                        alert('Verification failed');
-                    }
-                },
-                prefill: { name: user.name, email: user.email },
-                theme: { color: "#6366f1" }
-            };
-
-            const rzp = new window.Razorpay(options);
-            rzp.open();
+            alert(res.data.message || 'Registration successful!');
+            navigate('/profile');
         } catch (err) {
-            alert('Error with payment order');
+            alert(err.response?.data?.message || 'Error during registration');
+        } finally {
+            setSubmitting(false);
         }
     };
 

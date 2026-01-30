@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const Signup = () => {
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', college: '' });
+    const [formData, setFormData] = useState({ name: '', username: '', email: '', password: '', college: '' });
     const [isAdminRequest, setIsAdminRequest] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -61,6 +61,25 @@ const Signup = () => {
                             }}
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label className="tech-font" style={{ display: 'block', marginBottom: '10px', color: 'var(--text-muted)', fontSize: '0.7rem' }}>[ UNIQUE_IDENTIFIER_USERNAME ]</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. vishnu_2026"
+                            style={{
+                                width: '100%',
+                                padding: '15px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid var(--glass-border)',
+                                color: 'white',
+                                borderRadius: '4px',
+                                outline: 'none'
+                            }}
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
                             required
                         />
                     </div>

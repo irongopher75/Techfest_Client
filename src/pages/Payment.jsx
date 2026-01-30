@@ -6,7 +6,7 @@ import API_BASE_URL from '../config/api';
 const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { event } = location.state || {};
+    const { event, teamName, teamMembers, teamMemberNames } = location.state || {};
 
     const [transactionId, setTransactionId] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -34,7 +34,9 @@ const Payment = () => {
             await axios.post(`${API_BASE_URL}/api/registrations/manual-upi`, {
                 eventId: event._id,
                 transactionId,
-                amountPaid: amount
+                amountPaid: amount,
+                teamName,
+                teamMembers
             }, { headers: { 'x-auth-token': token } });
 
             alert('Payment submitted for verification! It will be approved within 24 hours.');
@@ -51,8 +53,13 @@ const Payment = () => {
     return (
         <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div className="glass-morphism animate-fade-in" style={{ maxWidth: '500px', width: '100%', padding: '40px', textAlign: 'center' }}>
-                <div className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.8rem', letterSpacing: '2px', marginBottom: '20px' }}>PAYMENT_PROTOCOL</div>
-                <h2 className="tech-font" style={{ fontSize: '1.5rem', marginBottom: '10px' }}>{event.title}</h2>
+                <div className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.8rem', letterSpacing: '2px', marginBottom: '10px' }}>PAYMENT_PROTOCOL</div>
+                <h2 className="tech-font" style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{event.title}</h2>
+                {teamName && (
+                    <div className="tech-font" style={{ color: 'var(--secondary)', fontSize: '0.75rem', marginBottom: '20px' }}>
+                        TEAM: {teamName.toUpperCase()} ({teamMemberNames.length + 1} MEMBERS)
+                    </div>
+                )}
                 <div className="tech-font" style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--primary)', marginBottom: '30px' }}>₹{amount}</div>
 
                 {isMobile ? (

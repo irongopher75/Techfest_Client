@@ -27,7 +27,7 @@ const Navbar = () => {
                 <Link to="/" className="logo-container" style={{ filter: 'drop-shadow(0 0 8px var(--primary-glow))' }}>
                     <img src="/assets/ambiora-logo.png" alt="Ambiora" />
                     <span className="tech-font" style={{ letterSpacing: '2px' }}>
-                        AMBIORA<span style={{ color: 'var(--primary)' }}>26</span>
+                        AMBIORA<span style={{ color: 'var(--primary)' }}> 26'</span>
                     </span>
                 </Link>
                 <div className="nav-links">

@@ -38,24 +38,25 @@ const SuperiorDashboard = () => {
     };
 
     const [eventForm, setEventForm] = useState({
-        title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical'
+        title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical',
+        eventType: 'individual', maxTeamSize: 1
     });
 
     const handleCreateEvent = async (e) => {
         e.preventDefault();
         try {
-            const { title, description, fee, day, month, year, venue, category } = eventForm;
+            const { title, description, fee, day, month, year, venue, category, eventType, maxTeamSize } = eventForm;
 
             // Format date correctly for backend
             const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
             const token = localStorage.getItem('token');
             await axios.post(`${API_BASE_URL}/api/events`, {
-                title, description, fee, date, venue, category
+                title, description, fee, date, venue, category, eventType, maxTeamSize
             }, { headers: { 'x-auth-token': token } });
 
             alert('Event created successfully!');
-            setEventForm({ title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical' });
+            setEventForm({ title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical', eventType: 'individual', maxTeamSize: 1 });
             fetchData();
         } catch (err) {
             console.error('Event Creation Error:', err);
@@ -244,6 +245,15 @@ const SuperiorDashboard = () => {
                                     <select className="glass-morphism" style={{ padding: '12px', background: '#111', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.category} onChange={e => setEventForm({ ...eventForm, category: e.target.value })}>
                                         {['Technical', 'Workshop', 'Cultural', 'Gaming', 'Creative'].map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <select className="glass-morphism" style={{ padding: '12px', background: '#111', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.eventType} onChange={e => setEventForm({ ...eventForm, eventType: e.target.value, maxTeamSize: e.target.value === 'individual' ? 1 : eventForm.maxTeamSize })}>
+                                            <option value="individual">SINGLE_PLAYER</option>
+                                            <option value="group">SQUAD_MODE</option>
+                                        </select>
+                                        {eventForm.eventType === 'group' && (
+                                            <input type="number" className="glass-morphism" placeholder="TEAM_SIZE" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.maxTeamSize} onChange={e => setEventForm({ ...eventForm, maxTeamSize: e.target.value })} min="2" max="10" required />
+                                        )}
+                                    </div>
                                     <button type="submit" className="btn btn-primary" style={{ marginTop: '10px' }}>DISPATCH_EVENT</button>
                                 </div>
                             </form>
@@ -290,10 +300,13 @@ const SuperiorDashboard = () => {
                                     {registrations.map(reg => (
                                         <tr key={reg._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                             <td style={{ padding: '15px' }}>
-                                                <div>{reg.user?.name}</div>
+                                                <div>{reg.user?.name} {reg.teamMembers?.length > 0 && <span style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>(LEADER + {reg.teamMembers.length})</span>}</div>
                                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{reg.user?.email}</div>
                                             </td>
-                                            <td style={{ padding: '15px' }}>{reg.event?.title}</td>
+                                            <td style={{ padding: '15px' }}>
+                                                <div>{reg.event?.title}</div>
+                                                {reg.teamName && <div style={{ fontSize: '0.7rem', color: 'var(--secondary)' }} className="tech-font">TEAM: {reg.teamName}</div>}
+                                            </td>
                                             <td style={{ padding: '15px' }}>{reg.transactionId || 'NONE'}</td>
                                             <td style={{ padding: '15px' }}>
                                                 <span className="tech-font" style={{ color: reg.status === 'paid' ? 'var(--primary)' : 'var(--accent)', fontSize: '0.75rem' }}>{reg.status.toUpperCase()}</span>

@@ -151,9 +151,15 @@ const EventAdminDashboard = () => {
                             <tbody>
                                 {registrations.map(reg => (
                                     <tr key={reg._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '20px' }}>{reg.user?.name}</td>
+                                        <td style={{ padding: '20px' }}>
+                                            <div>{reg.user?.name} {reg.teamMembers?.length > 0 && <span style={{ color: 'var(--primary)' }}>(LEADER + {reg.teamMembers.length})</span>}</div>
+                                            {reg.teamName && <div style={{ fontSize: '0.7rem', color: 'var(--secondary)' }} className="tech-font">TEAM: {reg.teamName}</div>}
+                                        </td>
                                         <td style={{ padding: '20px' }}>{reg.user?.email}</td>
-                                        <td style={{ padding: '20px' }} className="tech-font">{reg.event?.title}</td>
+                                        <td style={{ padding: '20px' }} className="tech-font">
+                                            {reg.event?.title}
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{reg.event?.eventType === 'group' ? 'SQUAD_MODE' : 'SOLO_UNIT'}</div>
+                                        </td>
                                         <td style={{ padding: '20px' }}>{reg.user?.college}</td>
                                         <td style={{ padding: '20px' }}>{new Date(reg.createdAt).toLocaleDateString()}</td>
                                     </tr>

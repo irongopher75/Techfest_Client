@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 const Home = () => {
+    const { user } = useContext(AuthContext);
+
     return (
         <div className="grid-bg">
             {/* Hero / Landing Section */}
@@ -59,7 +63,7 @@ const Home = () => {
                         textShadow: '0 0 30px var(--primary-glow)'
                     }}>
                         AMBIORA <br />
-                        <span className="gradient-text glow-text">2026</span>
+                        <span className="gradient-text glow-text">26'</span>
                     </h1>
 
                     <p style={{
@@ -76,7 +80,7 @@ const Home = () => {
 
                     <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Link to="/events" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.75rem' }}>Enter the Arena</Link>
-                        <Link to="/signup" className="btn btn-outline" style={{ padding: '10px 20px', fontSize: '0.75rem' }}>Join the Network</Link>
+                        {!user && <Link to="/signup" className="btn btn-outline" style={{ padding: '10px 20px', fontSize: '0.75rem' }}>Join the Network</Link>}
                     </div>
                 </div>
 

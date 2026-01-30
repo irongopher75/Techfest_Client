@@ -13,6 +13,13 @@ const Events = () => {
     const navigate = useNavigate();
 
     const [submitting, setSubmitting] = useState(false);
+    const [showTeamModal, setShowTeamModal] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [teamName, setTeamName] = useState('');
+    const [teamMembers, setTeamMembers] = useState([]); // List of user objects
+    const [searchUsername, setSearchUsername] = useState('');
+    const [searching, setSearching] = useState(false);
+
     const categories = ['All', 'Technical', 'Workshop', 'Cultural', 'Gaming', 'Creative'];
 
     useEffect(() => {
@@ -44,27 +51,72 @@ const Events = () => {
             return;
         }
 
+        if (event.eventType === 'group') {
+            setSelectedEvent(event);
+            setTeamMembers([]);
+            setTeamName('');
+            setShowTeamModal(true);
+            return;
+        }
+
         if (event.fee > 0) {
             navigate('/payment', { state: { event } });
         } else {
-            // Simplified for free events if any
             if (!window.confirm(`Register for ${event.title}?`)) return;
             registerDirectly(event);
         }
     };
 
-    const registerDirectly = async (event) => {
+    const handleFindMember = async () => {
+        if (!searchUsername) return;
+        if (teamMembers.some(m => m.username === searchUsername) || user.username === searchUsername) {
+            return alert('User already in team');
+        }
+
+        setSearching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/api/users/find/${searchUsername}`, {
+                headers: { 'x-auth-token': token }
+            });
+            setTeamMembers([...teamMembers, res.data]);
+            setSearchUsername('');
+        } catch (err) {
+            alert(err.response?.data?.message || 'User not found');
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleProceed = () => {
+        if (!teamName) return alert('Enter team name');
+        if (teamMembers.length + 1 < 2) return alert('Add at least one teammate');
+
+        const teamData = {
+            teamName,
+            teamMembers: teamMembers.map(m => m._id),
+            teamMemberNames: teamMembers.map(m => m.username)
+        };
+
+        if (selectedEvent.fee > 0) {
+            navigate('/payment', { state: { event: selectedEvent, ...teamData } });
+        } else {
+            registerDirectly(selectedEvent, teamData);
+        }
+    };
+
+    const registerDirectly = async (event, teamData = {}) => {
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
             await axios.post(`${API_BASE_URL}/api/registrations/register`,
-                { eventId: event._id },
+                { eventId: event._id, ...teamData },
                 { headers: { 'x-auth-token': token } }
             );
             alert('Registration successful!');
             navigate('/profile');
         } catch (err) {
-            alert('Registration failed');
+            alert(err.response?.data?.message || 'Registration failed');
         } finally {
             setSubmitting(false);
         }
@@ -155,8 +207,8 @@ const Events = () => {
                                         SCHEDULE: {new Date(event.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
                                     </span>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ width: '4px', height: '4px', background: 'var(--secondary)' }}></div>
-                                        LOCATION: {event.venue.toUpperCase()}
+                                        <div style={{ width: '4px', height: '4px', background: 'var(--accent)' }}></div>
+                                        MODE: {event.eventType === 'group' ? `TEAM (MAX ${event.maxTeamSize})` : 'SOLO'}
                                     </span>
                                 </div>
 
@@ -171,13 +223,64 @@ const Events = () => {
                                         className="btn btn-primary"
                                         style={{ padding: '12px 25px', fontSize: '0.8rem' }}
                                     >
-                                        {submitting ? '...' : 'ACCESS_PROTOCOL'}
+                                        {submitting ? '...' : (event.eventType === 'group' ? 'INIT_TEAM' : 'ACCESS_PROTOCOL')}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
+
+                {/* Team Registration Modal */}
+                {showTeamModal && selectedEvent && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+                        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+                    }}>
+                        <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '40px', border: '1px solid var(--primary)' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                                <h3 className="tech-font" style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>SQUAD_CONFIG</h3>
+                                <p className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>EVENT: {selectedEvent.title.toUpperCase()}</p>
+                            </div>
+
+                            <div style={{ marginBottom: '25px' }}>
+                                <label className="tech-font" style={{ display: 'block', marginBottom: '10px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>[ TEAM_NAME ]</label>
+                                <input className="glass-morphism" value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="e.g. CYBER_SHARKS" style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', outline: 'none' }} />
+                            </div>
+
+                            <div style={{ marginBottom: '30px' }}>
+                                <label className="tech-font" style={{ display: 'block', marginBottom: '10px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>[ ADD_OPERATIVES_BY_USERNAME ]</label>
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                    <input className="glass-morphism" value={searchUsername} onChange={e => setSearchUsername(e.target.value)} placeholder="username" style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontSize: '0.85rem', outline: 'none' }} />
+                                    <button onClick={handleFindMember} disabled={searching || teamMembers.length + 1 >= selectedEvent.maxTeamSize} className="btn btn-outline" style={{ padding: '0 15px', fontSize: '0.7rem' }}>
+                                        {searching ? '...' : 'SEARCH'}
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div className="tech-font" style={{ fontSize: '0.75rem', color: 'var(--primary)', padding: '10px', background: 'rgba(0, 242, 255, 0.05)', borderRadius: '4px' }}>
+                                        👤 {user.username} (LEADER)
+                                    </div>
+                                    {teamMembers.map(member => (
+                                        <div key={member._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', border: '1px solid var(--glass-border)', borderRadius: '4px' }}>
+                                            <span style={{ fontSize: '0.85rem', color: '#fff' }}>👤 {member.username}</span>
+                                            <button onClick={() => setTeamMembers(teamMembers.filter(m => m._id !== member._id))} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+                                        </div>
+                                    ))}
+                                    <div style={{ textAlign: 'center', marginTop: '10px', color: 'var(--text-muted)', fontSize: '0.65rem' }} className="tech-font">
+                                        CAPACITY: {teamMembers.length + 1} / {selectedEvent.maxTeamSize}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                                <button onClick={() => setShowTeamModal(false)} className="btn btn-outline" style={{ flex: 1 }}>CANCEL</button>
+                                <button onClick={handleProceed} disabled={!teamName || teamMembers.length < 1} className="btn btn-primary" style={{ flex: 1 }}>PROCEED</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {filteredEvents.length === 0 && (
                     <div className="tech-font" style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)', letterSpacing: '2px' }}>

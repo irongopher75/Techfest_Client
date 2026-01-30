@@ -59,7 +59,7 @@ const EventAdminDashboard = () => {
     if (loading) return <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="tech-font animate-pulse">ACCESSING_ASSIGNED_SECTORS...</div></div>;
 
     return (
-        <div className="grid-bg" style={{ minHeight: '100vh', paddingTop: '60px' }}>
+        <div className="grid-bg" style={{ minHeight: '100vh', paddingTop: '100px' }}>
             <div className="container animate-fade-in" style={{ paddingBottom: '100px' }}>
                 <header style={{ marginBottom: '60px' }}>
                     <h1 className="section-title">SECTOR_CONTROL</h1>

@@ -37,6 +37,56 @@ const SuperiorDashboard = () => {
         }
     };
 
+    const [eventForm, setEventForm] = useState({
+        title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical'
+    });
+
+    const handleCreateEvent = async (e) => {
+        e.preventDefault();
+        try {
+            const { title, description, fee, day, month, year, venue, category } = eventForm;
+
+            // Format date correctly for backend
+            const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/api/events`, {
+                title, description, fee, date, venue, category
+            }, { headers: { 'x-auth-token': token } });
+
+            alert('Event created successfully!');
+            setEventForm({ title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical' });
+            fetchData();
+        } catch (err) {
+            console.error('Event Creation Error:', err);
+            alert(`Failed to create event: ${err.response?.data?.message || err.message}`);
+        }
+    };
+
+    const handleVerifyRegistration = async (regId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/api/registrations/verify/${regId}`, {}, { headers: { 'x-auth-token': token } });
+            alert('Registration verified!');
+            fetchData();
+        } catch (err) {
+            alert('Failed to verify');
+        }
+    };
+
+    const handleEventDelete = async (eventId) => {
+        if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${API_BASE_URL}/api/events/${eventId}`, { headers: { 'x-auth-token': token } });
+            alert('Event deleted successfully!');
+            fetchData();
+        } catch (err) {
+            console.error('Event Deletion Error:', err);
+            alert(`Failed to delete event: ${err.response?.data?.message || err.message}`);
+        }
+    };
+
     const handleApprove = async (adminId, assignedEvents) => {
         try {
             const token = localStorage.getItem('token');
@@ -75,12 +125,12 @@ const SuperiorDashboard = () => {
     };
 
     return (
-        <div className="grid-bg" style={{ minHeight: '100vh', paddingTop: '60px' }}>
+        <div className="grid-bg" style={{ minHeight: '100vh', paddingTop: '100px' }}>
             <div className="container animate-fade-in" style={{ paddingBottom: '100px' }}>
                 <header style={{ marginBottom: '60px' }}>
                     <h1 className="section-title">SUPERIOR_CONSOLE</h1>
                     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                        {['overview', 'admins', 'registrations'].map(tab => (
+                        {['overview', 'admins', 'events', 'registrations'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -174,6 +224,54 @@ const SuperiorDashboard = () => {
                     </div>
                 )}
 
+                {activeTab === 'events' && (
+                    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 400px) 1fr', gap: '40px' }}>
+                        <div className="glass-morphism" style={{ padding: '30px' }}>
+                            <h3 className="tech-font" style={{ marginBottom: '25px', fontSize: '1.1rem', color: 'var(--primary)' }}>CREATE_EVENT_INSTANCE</h3>
+                            <form onSubmit={handleCreateEvent}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <input className="glass-morphism" placeholder="TITLE" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} required />
+                                    <textarea className="glass-morphism" placeholder="DESCRIPTION" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', minHeight: '100px' }} value={eventForm.description} onChange={e => setEventForm({ ...eventForm, description: e.target.value })} required />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
+                                        <input type="number" className="glass-morphism" placeholder="FEE (₹)" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.fee} onChange={e => setEventForm({ ...eventForm, fee: e.target.value })} required />
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '5px' }}>
+                                            <input type="number" className="glass-morphism" placeholder="DD" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }} value={eventForm.day} onChange={e => { if (e.target.value.length <= 2) setEventForm({ ...eventForm, day: e.target.value }) }} required min="1" max="31" />
+                                            <input type="number" className="glass-morphism" placeholder="MM" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }} value={eventForm.month} onChange={e => { if (e.target.value.length <= 2) setEventForm({ ...eventForm, month: e.target.value }) }} required min="1" max="12" />
+                                            <input type="number" className="glass-morphism" placeholder="YYYY" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }} value={eventForm.year} onChange={e => { if (e.target.value.length <= 4) setEventForm({ ...eventForm, year: e.target.value }) }} required />
+                                        </div>
+                                    </div>
+                                    <input className="glass-morphism" placeholder="VENUE" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.venue} onChange={e => setEventForm({ ...eventForm, venue: e.target.value })} required />
+                                    <select className="glass-morphism" style={{ padding: '12px', background: '#111', color: '#fff', border: '1px solid var(--glass-border)' }} value={eventForm.category} onChange={e => setEventForm({ ...eventForm, category: e.target.value })}>
+                                        {['Technical', 'Workshop', 'Cultural', 'Gaming', 'Creative'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <button type="submit" className="btn btn-primary" style={{ marginTop: '10px' }}>DISPATCH_EVENT</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="glass-morphism" style={{ padding: '30px', overflowY: 'auto', maxHeight: '600px' }}>
+                            <h3 className="tech-font" style={{ marginBottom: '25px', fontSize: '1.1rem', color: 'var(--secondary)' }}>ACTIVE_INSTANCES</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                {events.map(event => (
+                                    <div key={event._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div>
+                                            <div className="tech-font" style={{ fontSize: '0.9rem' }}>{event.title}</div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{event.category} | ₹{event.fee}</div>
+                                            <div className="tech-font" style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '5px' }}>ID: {event._id}</div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleEventDelete(event._id)}
+                                            className="btn btn-outline"
+                                            style={{ color: 'var(--accent)', borderColor: 'var(--accent)', padding: '5px 10px', fontSize: '0.6rem' }}
+                                        >
+                                            DELETE
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'registrations' && (
                     <div className="glass-morphism" style={{ padding: '40px' }}>
                         <h3 className="tech-font" style={{ marginBottom: '30px', fontSize: '1.2rem', color: 'var(--primary)' }}>GLOBAL_DATA_STREAM</h3>
@@ -183,9 +281,9 @@ const SuperiorDashboard = () => {
                                     <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--glass-border)' }}>
                                         <th style={{ padding: '15px' }}>USER</th>
                                         <th style={{ padding: '15px' }}>EVENT</th>
-                                        <th style={{ padding: '15px' }}>FEE</th>
+                                        <th style={{ padding: '15px' }}>UTI_/_UTR</th>
                                         <th style={{ padding: '15px' }}>STATUS</th>
-                                        <th style={{ padding: '15px' }}>TIMESTAMP</th>
+                                        <th style={{ padding: '15px' }}>ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -196,9 +294,15 @@ const SuperiorDashboard = () => {
                                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{reg.user?.email}</div>
                                             </td>
                                             <td style={{ padding: '15px' }}>{reg.event?.title}</td>
-                                            <td style={{ padding: '15px' }}>₹{reg.event?.fee}</td>
-                                            <td style={{ padding: '15px' }} className="tech-font">{reg.status.toUpperCase()}</td>
-                                            <td style={{ padding: '15px' }}>{new Date(reg.createdAt).toLocaleString()}</td>
+                                            <td style={{ padding: '15px' }}>{reg.transactionId || 'NONE'}</td>
+                                            <td style={{ padding: '15px' }}>
+                                                <span className="tech-font" style={{ color: reg.status === 'paid' ? 'var(--primary)' : 'var(--accent)', fontSize: '0.75rem' }}>{reg.status.toUpperCase()}</span>
+                                            </td>
+                                            <td style={{ padding: '15px' }}>
+                                                {reg.status !== 'paid' && (
+                                                    <button onClick={() => handleVerifyRegistration(reg._id)} className="btn btn-primary" style={{ padding: '5px 12px', fontSize: '0.6rem' }}>VERIFY</button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

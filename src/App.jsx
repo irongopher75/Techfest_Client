@@ -8,6 +8,7 @@ import Events from './pages/Events';
 import Profile from './pages/Profile';
 import SuperiorDashboard from './pages/admin/SuperiorDashboard';
 import EventAdminDashboard from './pages/admin/EventAdminDashboard';
+import Payment from './pages/Payment';
 import Footer from './components/Footer';
 import './index.css';
 
@@ -25,6 +26,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin/superior" element={<SuperiorDashboard />} />
             <Route path="/admin/event" element={<EventAdminDashboard />} />
+            <Route path="/payment" element={<Payment />} />
           </Routes>
         </div>
         <Footer />

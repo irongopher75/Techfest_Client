@@ -37,7 +37,7 @@ const Profile = () => {
 
     return (
         <div className="grid-bg" style={{ minHeight: '100vh' }}>
-            <div className="container animate-fade-in" style={{ paddingBottom: '100px', paddingTop: '60px' }}>
+            <div className="container animate-fade-in" style={{ paddingBottom: '100px', paddingTop: '100px' }}>
                 <div className="glass-morphism" style={{ padding: '60px', marginBottom: '80px', borderLeft: '4px solid var(--primary)', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '40px', position: 'relative', zIndex: '2', flexWrap: 'wrap' }}>
                         <div style={{

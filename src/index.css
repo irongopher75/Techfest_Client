@@ -242,6 +242,13 @@ nav.scrolled {
   min-width: 0;
 }
 
+.logo-container img {
+  height: 35px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .nav-links {
   display: flex;
   gap: 2.5rem;

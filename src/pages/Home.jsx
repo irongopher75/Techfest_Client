@@ -23,9 +23,9 @@ const Home = () => {
                         marginBottom: window.innerWidth < 480 ? '20px' : '40px',
                         alignItems: 'center'
                     }}>
-                        <img src="/assets/nmims-shirpur-logo.png" alt="NMIMS Logo" style={{ height: window.innerWidth < 480 ? '30px' : (window.innerWidth < 768 ? '40px' : '60px'), filter: 'brightness(0) invert(1)' }} />
+                        <img src="/assets/nmims-shirpur-logo.png" alt="NMIMS Logo" style={{ height: window.innerWidth < 480 ? '30px' : (window.innerWidth < 768 ? '40px' : '60px'), width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
                         <div style={{ width: '2px', height: window.innerWidth < 480 ? '20px' : (window.innerWidth < 768 ? '30px' : '50px'), background: 'var(--glass-border)' }}></div>
-                        <img src="/assets/ambiora-logo.png" alt="Ambiora Logo" style={{ height: window.innerWidth < 480 ? '30px' : (window.innerWidth < 768 ? '40px' : '60px') }} />
+                        <img src="/assets/ambiora-logo.png" alt="Ambiora Logo" style={{ height: window.innerWidth < 480 ? '30px' : (window.innerWidth < 768 ? '40px' : '60px'), width: 'auto', objectFit: 'contain' }} />
                     </div>
 
                     <h4 className="tech-font" style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: window.innerWidth < 768 ? '0.9rem' : '1.2rem' }}>Greetings, Innovators</h4>

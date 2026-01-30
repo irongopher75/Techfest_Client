@@ -35,6 +35,7 @@ const Footer = () => {
                 </div>
                 <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     <p className="tech-font">© 2026 AMBIORA - MPSTME SHIRPUR. ARCHITECTED FOR THE FUTURE.</p>
+                    <p className="tech-font" style={{ marginTop: '10px', fontSize: '0.65rem', color: 'var(--primary)', letterSpacing: '2px', opacity: 0.8 }}>CREATED BY VISHNU PANICKER</p>
                 </div>
             </div>
         </footer>

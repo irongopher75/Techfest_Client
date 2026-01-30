@@ -32,8 +32,8 @@ const Signup = () => {
     };
 
     return (
-        <div className="grid-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '100px 20px' }}>
-            <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '50px', border: '1px solid var(--glass-border)' }}>
+        <div className="grid-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: window.innerWidth < 768 ? '80px 15px' : '100px 20px' }}>
+            <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: window.innerWidth < 768 ? '30px 20px' : '50px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <h2 className="tech-font" style={{ fontSize: '1.8rem', letterSpacing: '2px', color: '#fff' }}>INITIALIZE_ENTITY</h2>
                     <p className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>NEW_RECRUIT_ONBOARDING_PROTOCOL</p>

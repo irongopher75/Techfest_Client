@@ -23,23 +23,23 @@ const Navbar = () => {
                         AMBIORA<span style={{ color: 'var(--primary)' }}>26</span>
                     </span>
                 </Link>
-                <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
-                    <Link to="/events" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.8rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Events</Link>
+                <div className="nav-links" style={{ display: 'flex', gap: window.innerWidth < 768 ? '1rem' : '2.5rem', alignItems: 'center' }}>
+                    <Link to="/events" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.75rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Events</Link>
                     {user ? (
                         <>
                             {user.role === 'superior_admin' && (
-                                <Link to="/admin/superior" className="tech-font" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.75rem', transition: '0.3s' }}>SUPERIOR_CONSOLE</Link>
+                                <Link to="/admin/superior" className="tech-font" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.7rem', transition: '0.3s' }}>SUPERIOR</Link>
                             )}
                             {user.role === 'event_admin' && user.isApproved && (
-                                <Link to="/admin/event" className="tech-font" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.75rem', transition: '0.3s' }}>EVENT_CONSOLE</Link>
+                                <Link to="/admin/event" className="tech-font" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.7rem', transition: '0.3s' }}>EVENT_CONSOLE</Link>
                             )}
-                            <Link to="/profile" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.8rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Profile</Link>
-                            <button onClick={logout} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.75rem' }}>LOGOUT</button>
+                            <Link to="/profile" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.75rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Profile</Link>
+                            <button onClick={logout} className="btn btn-primary" style={{ padding: '6px 15px', fontSize: '0.65rem' }}>LOGOUT</button>
                         </>
                     ) : (
                         <>
-                            <Link to="/login" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.8rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Login</Link>
-                            <Link to="/signup" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.75rem' }}>Register</Link>
+                            <Link to="/login" className="tech-font" style={{ color: 'inherit', textDecoration: 'none', fontSize: '0.75rem', transition: '0.3s' }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Login</Link>
+                            <Link to="/signup" className="btn btn-primary" style={{ padding: '8px 15px', fontSize: '0.65rem' }}>Register</Link>
                         </>
                     )}
                 </div>

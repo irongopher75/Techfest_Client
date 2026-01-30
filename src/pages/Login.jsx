@@ -23,8 +23,8 @@ const Login = () => {
     };
 
     return (
-        <div className="grid-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '90vh' }}>
-            <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '450px', padding: '50px', border: '1px solid var(--glass-border)' }}>
+        <div className="grid-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: window.innerWidth < 768 ? '40px 15px' : '0' }}>
+            <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '450px', padding: window.innerWidth < 768 ? '30px 20px' : '50px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <h2 className="tech-font" style={{ fontSize: '1.8rem', letterSpacing: '2px', color: '#fff' }}>USER_AUTH</h2>
                     <p className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>INITIALIZING_SECURE_SESSION</p>

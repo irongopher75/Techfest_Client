@@ -225,13 +225,66 @@ nav.scrolled {
   border-bottom: 1px solid var(--glass-border);
 }
 
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   nav {
-    padding: 15px 0;
+    padding: 12px 0;
   }
 
   nav.scrolled {
-    padding: 10px 0;
+    padding: 8px 0;
+  }
+
+  .nav-links {
+    gap: 0.8rem;
+  }
+
+  .logo-container span {
+    font-size: 0.9rem !important;
+  }
+
+  .logo-container img {
+    height: 25px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-links {
+    gap: 0.5rem;
+  }
+
+  .nav-links a,
+  .nav-links button {
+    font-size: 0.65rem !important;
+    padding: 5px 10px !important;
+  }
+
+  .logo-container span {
+    display: none;
+    /* Hide 'AMBIORA26' text on very small screens, keep only logo icon */
   }
 }
 

@@ -1,29 +1,24 @@
-import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import { useContext } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
-import API_BASE_URL from '../config/api';
+import api from '../utils/api';
 
 const Profile = () => {
     const { user } = useContext(AuthContext);
-    const [registrations, setRegistrations] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchRegistrations = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await axios.get(`${API_BASE_URL}/api/registrations/my`, {
-                    headers: { 'x-auth-token': token }
-                });
-                setRegistrations(res.data);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching registrations', err);
-                setLoading(false);
-            }
-        };
-        if (user) fetchRegistrations();
-    }, [user]);
+    const { data: registrations = [], isLoading: loading } = useQuery({
+        queryKey: ['my-registrations'],
+        enabled: !!user,
+        queryFn: async () => {
+            const res = await api.get('/api/registrations/my');
+            return res.data;
+        },
+        onError: (err) => {
+            console.error('Error fetching registrations', err);
+            toast.error('Failed to fetch technical itinerary.');
+        }
+    });
 
     if (!user) return (
         <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

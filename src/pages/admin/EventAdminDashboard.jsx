@@ -1,62 +1,60 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import { useState, useContext } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AuthContext } from '../../context/AuthContext';
+import api from '../../utils/api';
+import toast from 'react-hot-toast';
 
 const EventAdminDashboard = () => {
-    const [registrations, setRegistrations] = useState([]);
-    const [events, setEvents] = useState([]); // Only assigned events
-    const [loading, setLoading] = useState(true);
+    const { user: authUser } = useContext(AuthContext);
+    const queryClient = useQueryClient();
     const [editingEvent, setEditingEvent] = useState(null);
+    const [regPage, setRegPage] = useState(1);
+    const regLimit = 20;
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const headers = { 'x-auth-token': token };
-
-            const [regsRes, eventsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/registrations/all`, { headers }),
-                axios.get(`${API_BASE_URL}/api/events`, { headers }) // We will filter this on frontend for now or use a specialized route
-            ]);
-
-            setRegistrations(regsRes.data);
-
-            // Get user info from local storage to find assigned IDs
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user && user.role !== 'superior_admin') {
-                const assignedIds = user.assignedEvents || [];
-                setEvents(eventsRes.data.filter(e => assignedIds.includes(e._id)));
-            } else {
-                setEvents(eventsRes.data); // Superior sees all
+    // Queries
+    const { data: events = [], isLoading: eventsLoading } = useQuery({
+        queryKey: ['events'],
+        queryFn: async () => {
+            const res = await api.get('/api/events');
+            if (authUser && authUser.role !== 'superior_admin') {
+                const assignedIds = authUser.assignedEvents || [];
+                return res.data.filter(e => assignedIds.includes(e._id));
             }
-        } catch (err) {
-            console.error('Error fetching event admin data:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+            return res.data;
+        },
+        enabled: !!authUser
+    });
 
-    const handleUpdateEvent = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_BASE_URL}/api/events/${editingEvent._id}`,
-                editingEvent,
-                { headers: { 'x-auth-token': token } }
-            );
-            alert('Event sector updated successfully.');
+    const { data: regData = { registrations: [], total: 0, pages: 1 }, isLoading: regsLoading } = useQuery({
+        queryKey: ['registrations', regPage],
+        queryFn: async () => {
+            const res = await api.get(`/api/registrations/all?page=${regPage}&limit=${regLimit}`);
+            return res.data;
+        },
+        keepPreviousData: true,
+        enabled: !!authUser
+    });
+
+    // Mutation
+    const updateEventMutation = useMutation({
+        mutationFn: (updatedEvent) => api.put(`/api/events/${updatedEvent._id}`, updatedEvent),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['events']);
+            toast.success('Event sector updated successfully.');
             setEditingEvent(null);
-            fetchData();
-        } catch (err) {
-            alert('Update failed: ' + (err.response?.data?.message || err.message));
-        }
+        },
+        onError: (err) => toast.error('Update failed: ' + (err.response?.data?.message || err.message))
+    });
+
+    const handleUpdateEvent = (e) => {
+        e.preventDefault();
+        updateEventMutation.mutate(editingEvent);
     };
 
-    if (loading) return <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="tech-font animate-pulse">ACCESSING_ASSIGNED_SECTORS...</div></div>;
+    const loading = eventsLoading || regsLoading;
+    const registrations = regData.registrations;
+
+    if (loading) return <div className="grid-bg" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="tech-font animate-pulse">ACCESSING_ASSIGNED_SECTORS...</div></div>;
 
     return (
         <div className="grid-bg" style={{ minHeight: '100vh', paddingTop: '100px' }}>
@@ -127,7 +125,9 @@ const EventAdminDashboard = () => {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '15px' }}>
-                                    <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>SAVE_CHANGES</button>
+                                    <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={updateEventMutation.isLoading}>
+                                        {updateEventMutation.isLoading ? 'SAVING...' : 'SAVE_CHANGES'}
+                                    </button>
                                     <button type="button" onClick={() => setEditingEvent(null)} className="btn btn-outline" style={{ flex: 1 }}>ABORT</button>
                                 </div>
                             </form>
@@ -168,6 +168,31 @@ const EventAdminDashboard = () => {
                         </table>
                     </div>
                 </div>
+
+                {/* Pagination Controls */}
+                {regData.pages > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '30px' }}>
+                        <button
+                            onClick={() => setRegPage(p => Math.max(1, p - 1))}
+                            disabled={regPage === 1}
+                            className="btn btn-outline"
+                            style={{ padding: '5px 15px', fontSize: '0.7rem' }}
+                        >
+                            PREV
+                        </button>
+                        <span className="tech-font" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            PAGE <span style={{ color: 'var(--primary)' }}>{regPage}</span> / {regData.pages}
+                        </span>
+                        <button
+                            onClick={() => setRegPage(p => Math.min(regData.pages, p + 1))}
+                            disabled={regPage === regData.pages}
+                            className="btn btn-outline"
+                            style={{ padding: '5px 15px', fontSize: '0.7rem' }}
+                        >
+                            NEXT
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

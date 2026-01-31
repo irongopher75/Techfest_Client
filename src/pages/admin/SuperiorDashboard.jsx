@@ -1,126 +1,113 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../utils/api';
+import toast from 'react-hot-toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const SuperiorDashboard = () => {
-    const [admins, setAdmins] = useState([]);
-    const [events, setEvents] = useState([]);
-    const [pendingAdmins, setPendingAdmins] = useState([]);
-    const [registrations, setRegistrations] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('overview');
+    const [showConfirm, setShowConfirm] = useState(null);
+    const [editingAdmin, setEditingAdmin] = useState(null);
+    const [regPage, setRegPage] = useState(1);
+    const regLimit = 20;
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const headers = { 'x-auth-token': token };
-
-            const [adminsRes, eventsRes, regsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/auth/admins/all`, { headers }),
-                axios.get(`${API_BASE_URL}/api/events`, { headers }),
-                axios.get(`${API_BASE_URL}/api/registrations/all`, { headers })
-            ]);
-
-            setAdmins(adminsRes.data);
-            setEvents(eventsRes.data);
-            setRegistrations(regsRes.data);
-            setPendingAdmins(adminsRes.data.filter(a => !a.isApproved));
-        } catch (err) {
-            console.error('Error fetching admin data:', err);
-        } finally {
-            setLoading(false);
+    // Queries
+    const { data: admins = [], isLoading: adminsLoading } = useQuery({
+        queryKey: ['admins'],
+        queryFn: async () => {
+            const res = await api.get('/api/auth/admins/all');
+            return res.data;
         }
-    };
+    });
+
+    const { data: events = [], isLoading: eventsLoading } = useQuery({
+        queryKey: ['events'],
+        queryFn: async () => {
+            const res = await api.get('/api/events');
+            return res.data;
+        }
+    });
+
+    const { data: regData = { registrations: [], total: 0, pages: 1 }, isLoading: regsLoading } = useQuery({
+        queryKey: ['registrations', regPage],
+        queryFn: async () => {
+            const res = await api.get(`/api/registrations/all?page=${regPage}&limit=${regLimit}`);
+            return res.data;
+        },
+        keepPreviousData: true
+    });
+
+    // Mutations
+    const createEventMutation = useMutation({
+        mutationFn: (newEvent) => api.post('/api/events', newEvent),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['events']);
+            toast.success('Event deployed successfully!');
+        },
+        onError: (err) => toast.error(`Event deployment failed: ${err.response?.data?.message || err.message}`)
+    });
+
+    const verifyRegMutation = useMutation({
+        mutationFn: (regId) => api.post(`/api/registrations/verify/${regId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['registrations']);
+            toast.success('Registration verified!');
+        },
+        onError: () => toast.error('Failed to verify')
+    });
+
+    const deleteEventMutation = useMutation({
+        mutationFn: (eventId) => api.delete(`/api/events/${eventId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['events']);
+            toast.success('Event deleted successfully!');
+        },
+        onError: (err) => toast.error(`Sectored deletion failed: ${err.response?.data?.message || err.message}`)
+    });
+
+    const updateAdminMutation = useMutation({
+        mutationFn: ({ adminId, data }) => api.put(`/api/auth/admins/update/${adminId}`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['admins']);
+            toast.success('Admin profile updated.');
+        },
+        onError: () => toast.error('Failed to update admin profile')
+    });
 
     const [eventForm, setEventForm] = useState({
         title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical',
         eventType: 'individual', maxTeamSize: 1
     });
 
-    const handleCreateEvent = async (e) => {
+    const handleCreateEvent = (e) => {
         e.preventDefault();
-        try {
-            const { title, description, fee, day, month, year, venue, category, eventType, maxTeamSize } = eventForm;
-
-            // Format date correctly for backend
-            const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/events`, {
-                title, description, fee, date, venue, category, eventType, maxTeamSize
-            }, { headers: { 'x-auth-token': token } });
-
-            alert('Event created successfully!');
-            setEventForm({ title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical', eventType: 'individual', maxTeamSize: 1 });
-            fetchData();
-        } catch (err) {
-            console.error('Event Creation Error:', err);
-            alert(`Failed to create event: ${err.response?.data?.message || err.message}`);
+        const { title, description, fee, day, month, year, venue, category, eventType, maxTeamSize } = eventForm;
+        const date = new Date(`${year}-${month}-${day}`);
+        if (date < new Date() && date.toDateString() !== new Date().toDateString()) {
+            return toast.error('Event date must be in the future.');
         }
+        createEventMutation.mutate({
+            title, description, fee, date: date.toISOString(), venue, category, eventType, maxTeamSize
+        });
+        setEventForm({ title: '', description: '', fee: '', day: '', month: '', year: '', venue: '', category: 'Technical', eventType: 'individual', maxTeamSize: 1 });
     };
+    const handleVerifyRegistration = (regId) => verifyRegMutation.mutate(regId);
+    const handleEventDelete = (eventId) => deleteEventMutation.mutate(eventId);
+    const handleApprove = (adminId, assignedEvents) => updateAdminMutation.mutate({ adminId, data: { isApproved: true, assignedEvents } });
+    const updateAssignments = (adminId, assignedEvents) => updateAdminMutation.mutate({ adminId, data: { assignedEvents } });
 
-    const handleVerifyRegistration = async (regId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/registrations/verify/${regId}`, {}, { headers: { 'x-auth-token': token } });
-            alert('Registration verified!');
-            fetchData();
-        } catch (err) {
-            alert('Failed to verify');
-        }
-    };
+    const loading = adminsLoading || eventsLoading || regsLoading;
+    const registrations = regData.registrations;
+    const pendingAdmins = admins.filter(a => !a.isApproved);
 
-    const handleEventDelete = async (eventId) => {
-        if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`${API_BASE_URL}/api/events/${eventId}`, { headers: { 'x-auth-token': token } });
-            alert('Event deleted successfully!');
-            fetchData();
-        } catch (err) {
-            console.error('Event Deletion Error:', err);
-            alert(`Failed to delete event: ${err.response?.data?.message || err.message}`);
-        }
-    };
-
-    const handleApprove = async (adminId, assignedEvents) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_BASE_URL}/api/auth/admins/update/${adminId}`,
-                { isApproved: true, assignedEvents },
-                { headers: { 'x-auth-token': token } }
-            );
-            fetchData();
-            alert('Admin approved and events assigned.');
-        } catch (err) {
-            alert('Failed to approve admin');
-        }
-    };
-
-    const updateAssignments = async (adminId, assignedEvents) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_BASE_URL}/api/auth/admins/update/${adminId}`,
-                { assignedEvents },
-                { headers: { 'x-auth-token': token } }
-            );
-            fetchData();
-            alert('Assignments updated.');
-        } catch (err) {
-            alert('Failed to update assignments');
-        }
-    };
-
-    if (loading) return <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="tech-font animate-pulse">SYNCHRONIZING_GLOBAL_CONSOLE...</div></div>;
+    if (loading && activeTab === 'overview') return <div className="grid-bg" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="tech-font animate-pulse">SYNCHRONIZING_GLOBAL_CONSOLE...</div></div>;
 
     const stats = {
-        totalRegs: registrations.length,
-        totalRevenue: registrations.reduce((acc, reg) => acc + (reg.event?.fee || 0), 0),
+        totalRegs: regData.total || 0,
+        totalRevenue: registrations
+            .filter(reg => reg.status === 'paid')
+            .reduce((acc, reg) => acc + (reg.event?.fee || 0), 0), // Note: This only calculates revenue for currently loaded page. In a real app, you'd get this total from the server.
         activeAdmins: admins.filter(a => a.isApproved).length,
         pendingAdmins: pendingAdmins.length
     };
@@ -193,11 +180,7 @@ const SuperiorDashboard = () => {
                                             <td style={{ padding: '15px' }}>
                                                 {!admin.isApproved && (
                                                     <button
-                                                        onClick={() => {
-                                                            const ids = prompt('Enter comma separated Event IDs to assign:');
-                                                            if (ids) handleApprove(admin._id, ids.split(',').map(id => id.trim()));
-                                                            else handleApprove(admin._id, []);
-                                                        }}
+                                                        onClick={() => setEditingAdmin({ ...admin, tempAssignments: [] })}
                                                         className="btn btn-primary"
                                                         style={{ padding: '5px 12px', fontSize: '0.6rem' }}
                                                     >
@@ -206,10 +189,7 @@ const SuperiorDashboard = () => {
                                                 )}
                                                 {admin.role === 'event_admin' && admin.isApproved && (
                                                     <button
-                                                        onClick={() => {
-                                                            const ids = prompt('Enter NEW comma separated Event IDs:', admin.assignedEvents.map(e => e._id).join(', '));
-                                                            if (ids !== null) updateAssignments(admin._id, ids.split(',').map(id => id.trim()));
-                                                        }}
+                                                        onClick={() => setEditingAdmin({ ...admin, tempAssignments: admin.assignedEvents.map(e => e._id) })}
                                                         className="btn btn-outline"
                                                         style={{ padding: '5px 12px', fontSize: '0.6rem' }}
                                                     >
@@ -269,7 +249,7 @@ const SuperiorDashboard = () => {
                                             <div className="tech-font" style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '5px' }}>ID: {event._id}</div>
                                         </div>
                                         <button
-                                            onClick={() => handleEventDelete(event._id)}
+                                            onClick={() => setShowConfirm({ title: 'Delete Event?', message: 'Are you sure you want to delete this event? All registrations for this event will be affected.', onConfirm: () => handleEventDelete(event._id) })}
                                             className="btn btn-outline"
                                             style={{ color: 'var(--accent)', borderColor: 'var(--accent)', padding: '5px 10px', fontSize: '0.6rem' }}
                                         >
@@ -281,6 +261,13 @@ const SuperiorDashboard = () => {
                         </div>
                     </div>
                 )}
+                <ConfirmModal
+                    isOpen={!!showConfirm}
+                    onClose={() => setShowConfirm(null)}
+                    onConfirm={() => { showConfirm.onConfirm(); setShowConfirm(null); }}
+                    title={showConfirm?.title}
+                    message={showConfirm?.message}
+                />
 
                 {activeTab === 'registrations' && (
                     <div className="glass-morphism" style={{ padding: '40px' }}>
@@ -313,13 +300,84 @@ const SuperiorDashboard = () => {
                                             </td>
                                             <td style={{ padding: '15px' }}>
                                                 {reg.status !== 'paid' && (
-                                                    <button onClick={() => handleVerifyRegistration(reg._id)} className="btn btn-primary" style={{ padding: '5px 12px', fontSize: '0.6rem' }}>VERIFY</button>
+                                                    <button onClick={() => handleVerifyRegistration(reg._id)} className="btn btn-primary" style={{ padding: '5px 12px', fontSize: '0.6rem' }} disabled={verifyRegMutation.isLoading}>
+                                                        {verifyRegMutation.isLoading ? 'VERIFYING...' : 'VERIFY'}
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {regData.pages > 1 && (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '30px' }}>
+                                <button
+                                    onClick={() => setRegPage(p => Math.max(1, p - 1))}
+                                    disabled={regPage === 1}
+                                    className="btn btn-outline"
+                                    style={{ padding: '5px 15px', fontSize: '0.7rem' }}
+                                >
+                                    PREV
+                                </button>
+                                <span className="tech-font" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                    PAGE <span style={{ color: 'var(--primary)' }}>{regPage}</span> / {regData.pages}
+                                </span>
+                                <button
+                                    onClick={() => setRegPage(p => Math.min(regData.pages, p + 1))}
+                                    disabled={regPage === regData.pages}
+                                    className="btn btn-outline"
+                                    style={{ padding: '5px 15px', fontSize: '0.7rem' }}
+                                >
+                                    NEXT
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+                {editingAdmin && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+                        <div className="glass-morphism" style={{ width: '100%', maxWidth: '500px', padding: '40px', border: '1px solid var(--primary)' }}>
+                            <h2 className="tech-font" style={{ marginBottom: '20px', fontSize: '1.2rem' }}>{editingAdmin.isApproved ? 'UPDATE_ASSIGNMENTS' : 'APPROVE_ADMIN'}</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '20px' }}>SELECT_EVENTS_FOR_AUTHORIZATION</p>
+
+                            <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
+                                {events.map(event => (
+                                    <label key={event._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={editingAdmin.tempAssignments?.includes(event._id)}
+                                            onChange={(e) => {
+                                                const current = editingAdmin.tempAssignments || [];
+                                                const next = e.target.checked
+                                                    ? [...current, event._id]
+                                                    : current.filter(id => id !== event._id);
+                                                setEditingAdmin({ ...editingAdmin, tempAssignments: next });
+                                            }}
+                                        />
+                                        <span className="tech-font" style={{ fontSize: '0.75rem' }}>{event.title}</span>
+                                    </label>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                                <button
+                                    onClick={() => {
+                                        if (editingAdmin.isApproved) {
+                                            updateAssignments(editingAdmin._id, editingAdmin.tempAssignments);
+                                        } else {
+                                            handleApprove(editingAdmin._id, editingAdmin.tempAssignments);
+                                        }
+                                        setEditingAdmin(null);
+                                    }}
+                                    className="btn btn-primary" style={{ flex: 1 }}
+                                >
+                                    {editingAdmin.isApproved ? 'CONFIRM_CHANGES' : 'APPROVE_&_ASSIGN'}
+                                </button>
+                                <button onClick={() => setEditingAdmin(null)} className="btn btn-outline" style={{ flex: 1 }}>ABORT</button>
+                            </div>
                         </div>
                     </div>
                 )}

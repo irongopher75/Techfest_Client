@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 
 const Signup = () => {
@@ -21,7 +22,9 @@ const Signup = () => {
             await signup(data);
 
             if (isAdminRequest) {
-                alert('Admin request submitted. Please wait for superior approval.');
+                toast.success('Admin request submitted. Please wait for superior approval.', { duration: 5000 });
+            } else {
+                toast.success('Onboarding complete! Welcome operative.');
             }
             navigate('/profile');
         } catch (err) {
@@ -32,8 +35,8 @@ const Signup = () => {
     };
 
     return (
-        <div className="grid-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: window.innerWidth < 768 ? '80px 15px' : '100px 20px' }}>
-            <div className="glass-morphism animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: window.innerWidth < 768 ? '30px 20px' : '50px', border: '1px solid var(--glass-border)' }}>
+        <div className="grid-bg signup-container">
+            <div className="glass-morphism animate-fade-in signup-card">
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <h2 className="tech-font" style={{ fontSize: '1.8rem', letterSpacing: '2px', color: '#fff' }}>INITIALIZE_ENTITY</h2>
                     <p className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>NEW_RECRUIT_ONBOARDING_PROTOCOL</p>
@@ -136,6 +139,21 @@ const Signup = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             required
                         />
+                        {formData.password && (
+                            <div style={{ marginTop: '10px', fontSize: '0.6rem', fontFamily: 'var(--font-tech)' }}>
+                                <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} style={{
+                                            flex: 1, height: '3px',
+                                            background: formData.password.length >= i * 2 ? (formData.password.length > 6 ? 'var(--primary)' : 'var(--accent)') : 'rgba(255,255,255,0.1)'
+                                        }}></div>
+                                    ))}
+                                </div>
+                                <span style={{ color: formData.password.length > 6 ? 'var(--primary)' : 'var(--accent)' }}>
+                                    {formData.password.length > 6 ? 'SECURITY_OPTIMAL' : 'SECURITY_LOW'}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '35px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -150,7 +168,7 @@ const Signup = () => {
                             [ REQUEST_ADMIN_ACCESS ] :: REQUIRE SUPERIOR_CLEARANCE
                         </label>
                     </div>
-                    <button disabled={submitting} className="btn btn-primary" style={{ width: '100%', padding: '15px' }}>
+                    <button disabled={submitting} className="btn btn-primary" style={{ width: '100%', padding: '15px' }} aria-label="Submit registration form highlighting complete onboarding">
                         {submitting ? 'PROCESSING...' : 'COMPLETE_ONBOARDING'}
                     </button>
                 </form>

@@ -1,16 +1,38 @@
-# React + Vite
+# Techfest Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A high-performance, responsive React application for the Techfest platform, powered by Vite and TanStack Query.
 
-Currently, two official plugins are available:
+## 🚀 Features
+- **Glassmorphism UI**: A modern, premium aesthetic designed to impress.
+- **TanStack Query**: Automatic caching, background revalidation, and robust state management.
+- **Secure Auth**: Integration with `httpOnly` cookies and automatic token refresh logic.
+- **Lazy Loading**: Optimized performance through code-splitting and lazy-loaded admin panels.
+- **Toast Notifications**: Professional, non-blocking feedback using `react-hot-toast`.
+- **Custom Modals**: Interactive confirmation dialogs for critical actions.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠️ Tech Stack
+- **Framework**: React 18 (Vite)
+- **State Management**: TanStack Query + Context API
+- **Styling**: Vanilla CSS (Custom Variable System)
+- **API Client**: Axios (with centralized interceptors)
 
-## React Compiler
+## 📦 Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-## Expanding the ESLint configuration
+2. **Environment Setup**:
+   Create a `.env` file based on `.env.example`:
+   ```bash
+   VITE_API_BASE_URL=http://localhost:5000
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. **Development Mode**:
+   ```bash
+   npm run dev
+   ```
+
+---
+*Developed for Techfest 2026*

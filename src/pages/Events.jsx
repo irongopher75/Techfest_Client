@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from '../config/api';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import api from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Events = () => {
-    const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [category, setCategory] = useState('All');
-    const [loading, setLoading] = useState(true);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -19,23 +19,27 @@ const Events = () => {
     const [teamMembers, setTeamMembers] = useState([]); // List of user objects
     const [searchUsername, setSearchUsername] = useState('');
     const [searching, setSearching] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [eventToRegister, setEventToRegister] = useState(null);
 
     const categories = ['All', 'Technical', 'Workshop', 'Cultural', 'Gaming', 'Creative'];
 
+    const { data: events = [], isLoading: eventsLoading } = useQuery({
+        queryKey: ['events'],
+        queryFn: async () => {
+            const res = await api.get('/api/events');
+            return res.data;
+        }
+    });
+
     useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/api/events`);
-                setEvents(res.data);
-                setFilteredEvents(res.data);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching events', err);
-                setLoading(false);
-            }
-        };
-        fetchEvents();
-    }, []);
+        if (!searchUsername) return;
+        const delayDebounceFn = setTimeout(() => {
+            handleFindMember();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchUsername]);
 
     useEffect(() => {
         if (category === 'All') {
@@ -62,35 +66,32 @@ const Events = () => {
         if (event.fee > 0) {
             navigate('/payment', { state: { event } });
         } else {
-            if (!window.confirm(`Register for ${event.title}?`)) return;
-            registerDirectly(event);
+            setEventToRegister(event);
+            setShowConfirmModal(true);
         }
     };
 
     const handleFindMember = async () => {
-        if (!searchUsername) return;
         if (teamMembers.some(m => m.username === searchUsername) || user.username === searchUsername) {
-            return alert('User already in team');
+            return toast.error('User already in team');
         }
 
         setSearching(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${API_BASE_URL}/api/users/find/${searchUsername}`, {
-                headers: { 'x-auth-token': token }
-            });
+            const res = await api.get(`/api/users/find/${searchUsername}`);
             setTeamMembers([...teamMembers, res.data]);
             setSearchUsername('');
+            toast.success('Operative added to squad.');
         } catch (err) {
-            alert(err.response?.data?.message || 'User not found');
+            // Silently fail or minimal feedback for debounced search
         } finally {
             setSearching(false);
         }
     };
 
     const handleProceed = () => {
-        if (!teamName) return alert('Enter team name');
-        if (teamMembers.length + 1 < 2) return alert('Add at least one teammate');
+        if (!teamName) return toast.error('Enter team name');
+        if (teamMembers.length + 1 < 2) return toast.error('Add at least one teammate');
 
         const teamData = {
             teamName,
@@ -108,21 +109,17 @@ const Events = () => {
     const registerDirectly = async (event, teamData = {}) => {
         setSubmitting(true);
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/registrations/register`,
-                { eventId: event._id, ...teamData },
-                { headers: { 'x-auth-token': token } }
-            );
-            alert('Registration successful!');
+            await api.post('/api/registrations/register', { eventId: event._id, ...teamData });
+            toast.success('Registration successful!');
             navigate('/profile');
         } catch (err) {
-            alert(err.response?.data?.message || 'Registration failed');
+            toast.error(err.response?.data?.message || 'Registration failed');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return (
+    if (eventsLoading) return (
         <div className="container" style={{ textAlign: 'center', padding: '150px 0' }}>
             <div className="tech-font" style={{ fontSize: '1.2rem', color: 'var(--primary)', letterSpacing: '2px' }}>SYCHRONIZING DATA...</div>
         </div>
@@ -131,7 +128,7 @@ const Events = () => {
     return (
         <div className="grid-bg" style={{ minHeight: '100vh' }}>
             <div className="container animate-fade-in" style={{ paddingBottom: '100px', paddingTop: window.innerWidth < 768 ? '40px' : '100px' }}>
-                <header style={{ textAlign: 'center', padding: window.innerWidth < 768 ? '40px 0' : '80px 0', position: 'relative' }}>
+                <header style={{ textAlign: 'center', position: 'relative' }} className="responsive-header">
                     {/* Header Decorative Elements */}
                     <div style={{
                         position: 'absolute',
@@ -144,23 +141,22 @@ const Events = () => {
                         opacity: 0.5
                     }}></div>
 
-                    <h1 className="section-title" style={{ fontSize: window.innerWidth < 768 ? '2rem' : '4rem', textShadow: '0 0 20px var(--primary-glow)' }}>THE ARENA</h1>
+                    <h1 className="section-title responsive-title" style={{ textShadow: '0 0 20px var(--primary-glow)' }}>THE ARENA</h1>
                     <p className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.8rem', letterSpacing: '4px', marginBottom: '15px' }}>SECTOR: GLOBAL_COMPETITIONS</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: window.innerWidth < 768 ? '0.9rem' : '1.1rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.8' }}>
+                    <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.8' }} className="responsive-p">
                         Browse the specialized zones and claim your spot in the future of innovation. Synchronize your skills with industry pioneers.
                     </p>
                 </header>
 
                 {/* Category Filter */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: window.innerWidth < 768 ? '10px' : '15px', marginBottom: window.innerWidth < 768 ? '40px' : '80px', flexWrap: 'wrap', padding: '0 10px' }}>
+                <div className="filter-container">
                     {categories.map(cat => (
                         <button
                             key={cat}
+                            aria-label={`Filter events by ${cat} category`}
                             onClick={() => setCategory(cat)}
-                            className={`btn ${category === cat ? 'btn-primary' : 'btn-outline'}`}
+                            className={`btn ${category === cat ? 'btn-primary' : 'btn-outline'} filter-btn`}
                             style={{
-                                padding: window.innerWidth < 768 ? '8px 15px' : '12px 30px',
-                                fontSize: window.innerWidth < 768 ? '0.65rem' : '0.8rem',
                                 border: category === cat ? 'none' : '1px solid var(--glass-border)'
                             }}
                         >
@@ -220,6 +216,7 @@ const Events = () => {
                                     <button
                                         onClick={() => handleRegister(event)}
                                         disabled={submitting}
+                                        aria-label={event.eventType === 'group' ? `Initialize team registration for ${event.title}` : `Register for ${event.title}`}
                                         className="btn btn-primary"
                                         style={{ padding: '12px 25px', fontSize: '0.8rem' }}
                                     >
@@ -253,9 +250,7 @@ const Events = () => {
                                 <label className="tech-font" style={{ display: 'block', marginBottom: '10px', color: 'var(--text-muted)', fontSize: '0.65rem' }}>[ ADD_OPERATIVES_BY_USERNAME ]</label>
                                 <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                                     <input className="glass-morphism" value={searchUsername} onChange={e => setSearchUsername(e.target.value)} placeholder="username" style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontSize: '0.85rem', outline: 'none' }} />
-                                    <button onClick={handleFindMember} disabled={searching || teamMembers.length + 1 >= selectedEvent.maxTeamSize} className="btn btn-outline" style={{ padding: '0 15px', fontSize: '0.7rem' }}>
-                                        {searching ? '...' : 'SEARCH'}
-                                    </button>
+                                    {searching && <div className="tech-font" style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>SCANNING...</div>}
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -288,6 +283,17 @@ const Events = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                title="CONFIRM_REGISTRATION"
+                message={`Are you sure you want to register for ${eventToRegister?.title}? This action cannot be undone.`}
+                onConfirm={() => {
+                    registerDirectly(eventToRegister);
+                    setShowConfirmModal(false);
+                }}
+                onCancel={() => setShowConfirmModal(false)}
+            />
         </div>
     );
 };

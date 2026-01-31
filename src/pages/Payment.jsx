@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import API_BASE_URL from '../config/api';
+import api from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 const Payment = () => {
     const location = useLocation();
@@ -9,6 +9,7 @@ const Payment = () => {
     const { event, teamName, teamMembers, teamMemberNames } = location.state || {};
 
     const [transactionId, setTransactionId] = useState('');
+    const [upiId, setUpiId] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -18,31 +19,46 @@ const Payment = () => {
             return;
         }
         setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+
+        const fetchUpiDetails = async () => {
+            try {
+                const res = await api.get('/api/registrations/upi-details');
+                setUpiId(res.data.upiId);
+            } catch (err) {
+                console.error('Error fetching UPI details:', err);
+                toast.error('Failed to load payment details.');
+            }
+        };
+        fetchUpiDetails();
     }, [event, navigate]);
 
-    const upiId = "vishnurocky49@okhdfcbank";
     const amount = event?.fee || 0;
     const gpayLink = `upi://pay?pa=${upiId}&pn=Techfest&am=${amount}&cu=INR`;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!transactionId) return alert('Please enter Transaction ID (UTR)');
+        if (!transactionId) return toast.error('Please enter Transaction ID (UTR)');
+
+        // UTR Validation (12 digits)
+        const utrRegex = /^\d{12}$/;
+        if (!utrRegex.test(transactionId)) {
+            return toast.error('Invalid Transaction ID. Bank UTR must be exactly 12 digits.');
+        }
 
         setSubmitting(true);
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/registrations/manual-upi`, {
+            await api.post('/api/registrations/manual-upi', {
                 eventId: event._id,
                 transactionId,
                 amountPaid: amount,
                 teamName,
                 teamMembers
-            }, { headers: { 'x-auth-token': token } });
+            });
 
-            alert('Payment submitted for verification! It will be approved within 24 hours.');
+            toast.success('Payment submitted! Verification in progress.');
             navigate('/profile');
         } catch (err) {
-            alert(err.response?.data?.message || 'Submission failed');
+            toast.error(err.response?.data?.message || 'Submission failed');
         } finally {
             setSubmitting(false);
         }
@@ -51,7 +67,7 @@ const Payment = () => {
     if (!event) return null;
 
     return (
-        <div className="grid-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="grid-bg" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div className="glass-morphism animate-fade-in" style={{ maxWidth: '500px', width: '100%', padding: '40px', textAlign: 'center' }}>
                 <div className="tech-font" style={{ color: 'var(--primary)', fontSize: '0.8rem', letterSpacing: '2px', marginBottom: '10px' }}>PAYMENT_PROTOCOL</div>
                 <h2 className="tech-font" style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{event.title}</h2>

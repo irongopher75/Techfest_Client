@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
@@ -52,7 +53,10 @@ const Navbar = () => {
                                 transition: '0.3s',
                                 fontSize: '0.8rem'
                             }} onMouseOver={e => e.target.style.color = 'var(--primary)'} onMouseOut={e => e.target.style.color = 'inherit'}>Profile</Link>
-                            <button onClick={logout} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.7rem' }}>LOGOUT</button>
+                            <button onClick={async () => {
+                                navigate('/logged-out');
+                                await logout();
+                            }} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.7rem' }}>LOGOUT</button>
                         </>
                     ) : (
                         <>

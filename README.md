@@ -65,7 +65,7 @@ The high-performance, premium frontend for **Ambiora 2026'**, the annual technic
    ```
 
 ## 🔗 Project Links
-- **Backend API**: [Ambiora Server](../Techfest_Server/README.md)
+- **Backend Repo**: [irongopher75/Techfest_Server](https://github.com/irongopher75/Techfest_Server)
 - **Live Deployment**: [techfestmpstme](https://techfestmpstme.netlify.app)
 
 ---

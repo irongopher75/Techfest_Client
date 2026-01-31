@@ -1,20 +1,45 @@
-# Techfest Client
+# 💎 Ambiora Client
 
-A high-performance, responsive React application for the Techfest platform, powered by Vite and TanStack Query.
+The high-performance, premium frontend for **Ambiora 2026'**, the annual technical festival of NMIMS MPSTME, Shirpur. Built with a focus on cutting-edge aesthetics, responsiveness, and seamless user experience.
 
-## 🚀 Features
-- **Glassmorphism UI**: A modern, premium aesthetic designed to impress.
-- **TanStack Query**: Automatic caching, background revalidation, and robust state management.
-- **Secure Auth**: Integration with `httpOnly` cookies and automatic token refresh logic.
-- **Lazy Loading**: Optimized performance through code-splitting and lazy-loaded admin panels.
-- **Toast Notifications**: Professional, non-blocking feedback using `react-hot-toast`.
-- **Custom Modals**: Interactive confirmation dialogs for critical actions.
+## ✨ Core Features
+
+### 🎮 User Experience
+- **Glassmorphism Design System**: A sleek, futuristic UI with vibrant neon accents and frosted-glass effects.
+- **Dynamic HUD**: Interactive HUD elements and scanline animations for a high-tech "terminal" feel.
+- **Micro-Animations**: Smooth transitions and hover effects using CSS variables and keyframes.
+- **Toast Notifications**: Non-blocking, real-time feedback using `react-hot-toast`.
+
+### 🛡️ Secure Navigation
+- **Role-Based Routing**: Dedicated protected routes for **Users**, **Event Admins**, and **Superior Admins**.
+- **Smart Redirects**: Automatic navigation to `/logged-out` on session expiry or logout to ensure session integrity.
+- **Scroll Management**: Integrated `ScrollToTop` behavior on every route change.
+
+### ⚡ Performance & State
+- **TanStack Query (React Query)**: 
+    - Intelligent caching for events and registrations.
+    - Zero-lag navigation between tabs.
+    - Automatic background revalidation.
+- **Lazy Loading**: Admin dashboards are lazily loaded to minimize initial bundle size and boost page speed.
+- **Axios Interceptors**: Centralized API handling with automatic token injection and 401 challenge Handling.
+
+### 👨‍💼 Administrative Consoles
+- **Superior Dashboard**: 
+    - Global overview of all registrations.
+    - **Server-Side Pagination** for infinite lists without browser lag.
+    - Transaction verification (UPI UTR Validation).
+    - Event management (Create/Update/Delete).
+- **Event Admin Console**: 
+    - Focused view for specific assigned events.
+    - Participant list management and registration tracking.
 
 ## 🛠️ Tech Stack
-- **Framework**: React 18 (Vite)
-- **State Management**: TanStack Query + Context API
-- **Styling**: Vanilla CSS (Custom Variable System)
-- **API Client**: Axios (with centralized interceptors)
+- **Library**: [React 18](https://reactjs.org/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **State/Data**: [TanStack Query v5](https://tanstack.com/query/latest)
+- **Routing**: [React Router v7](https://reactrouter.com/)
+- **Styling**: Vanilla CSS (Modern Variable System)
+- **API Client**: Axios
 
 ## 📦 Getting Started
 
@@ -23,10 +48,10 @@ A high-performance, responsive React application for the Techfest platform, powe
    npm install
    ```
 
-2. **Environment Setup**:
-   Create a `.env` file based on `.env.example`:
-   ```bash
-   VITE_API_BASE_URL=http://localhost:5000
+2. **Environment Variables**:
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_BASE_URL=http://localhost:5001
    ```
 
 3. **Development Mode**:
@@ -34,5 +59,14 @@ A high-performance, responsive React application for the Techfest platform, powe
    npm run dev
    ```
 
+4. **Production Build**:
+   ```bash
+   npm run build
+   ```
+
+## 🔗 Project Links
+- **Backend API**: [Ambiora Server](../Techfest_Server/README.md)
+- **Live Deployment**: [techfestmpstme](https://techfestmpstme.netlify.app)
+
 ---
-*Developed for Techfest 2026*
+*Created with ❤️ by Vishnu Panicker for Ambiora 2026*

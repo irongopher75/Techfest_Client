@@ -33,7 +33,7 @@ const Payment = () => {
     }, [event, navigate]);
 
     const amount = event?.fee || 0;
-    const gpayLink = `upi://pay?pa=${upiId}&pn=Techfest&am=${amount}&cu=INR`;
+    const gpayLink = `upi://pay?pa=${upiId}&pn=Ambiora&am=${amount}&cu=INR`;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
